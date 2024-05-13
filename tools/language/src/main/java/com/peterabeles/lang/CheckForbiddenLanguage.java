@@ -213,6 +213,10 @@ public class CheckForbiddenLanguage {
             if (tokens == null) {
                 tokens = tokenizer.parse(line).stringTokens;
             }
+
+            // combine content within () cast statements if needed.
+            tokens = combinedQualifiedList(tokens);
+
             if (c.rule.matches(line, tokens)) {
                 continue;
             }
@@ -223,6 +227,35 @@ public class CheckForbiddenLanguage {
             }
             addFailure(line, c);
         }
+    }
+
+    /**
+     * For cast cases with internal qualifiers: "(com.gradle.process)moo.foo();"
+     * Post process all tokens with the cast parameters.
+     */
+    private List<String> combinedQualifiedList(List<String> tokens) {
+        List<String> result = new ArrayList<>(tokens);
+        int startIndex = result.indexOf("(");
+        int endIndex = result.indexOf(")");
+
+        if (startIndex == -1 || endIndex == -1 || endIndex <= startIndex + 1) {
+            return result; // No valid parenthesis found or no content to process
+        }
+
+        // Combine tokens between startIndex and endIndex
+        StringBuilder combinedToken = new StringBuilder();
+        for (int i = startIndex + 1; i < endIndex; i++) {
+            if (!tokens.get(i).equals(".")) {
+                if (combinedToken.length() > 0) combinedToken.append(".");
+                combinedToken.append(tokens.get(i));
+            }
+        }
+
+        // Replace the tokens between startIndex and endIndex with the combined token
+        result.subList(startIndex + 1, endIndex).clear();
+        result.add(startIndex + 1, combinedToken.toString());
+
+        return result;
     }
 
     /**

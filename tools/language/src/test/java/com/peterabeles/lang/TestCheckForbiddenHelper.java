@@ -83,7 +83,8 @@ public class TestCheckForbiddenHelper {
 	@Test void forbidNonExplicitVar_allowTypeCast() {
 		var alg = new CheckForbiddenLanguage();
 		CheckForbiddenHelper.forbidNonExplicitVar(alg, false, true);
-
+		assertTrue(alg.process("var a = (org.moo.foo.boo)moo.foo();"));
+		assertTrue(alg.process("var a = (foo.boo)moo.foo();"));
 		assertTrue(alg.process("var a= ( int ) moo.foo();"));
 		assertTrue(alg.process("var a= ( int)moo.foo();"));
 		assertTrue(alg.process("var a=(int) moo.foo();"));
